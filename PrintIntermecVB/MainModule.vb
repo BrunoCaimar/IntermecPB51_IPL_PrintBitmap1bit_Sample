@@ -3,6 +3,10 @@ Imports System.IO
 Imports System.Text
 
 Module MainModule
+    Private Const STX As Char = Chr(2)
+    Private Const ESC As Char = Chr(27)
+    Private Const ETX As Char = Chr(3)
+
     Public Sub Main(args As String())
         ' Exemplo de impressão de imagens monocromaticas 
         ' usando IPL - Impressora testada: Intermec PB51
@@ -19,7 +23,6 @@ Module MainModule
 
         Console.WriteLine("Enviando comando de impressão da imagem para impressora...")
         sendData2Printer(ipl_to_print_imagem)
-
     End Sub
 
     Private Function GetImageBits(path2bitmap As String) As ArrayList
@@ -44,10 +47,10 @@ Module MainModule
         Dim imagem = New StringBuilder()
         ' Cabeçalho (c - Modo de emulação)
 
-        imagem.AppendFormat("{0}{1}c{2}{3}", Chr(2), Chr(27), Chr(3), Environment.NewLine)
+        imagem.AppendFormat("{0}{1}c{2}{3}", STX, ESC, ETX, Environment.NewLine)
 
         ' P - Modo de programação
-        imagem.AppendFormat("{0}{1}P{2}{3}", Chr(2), Chr(27), Chr(3), Environment.NewLine)
+        imagem.AppendFormat("{0}{1}P{2}{3}", STX, ESC, ETX, Environment.NewLine)
 
         Dim contador = 0
         For Each item In dados
@@ -56,14 +59,23 @@ Module MainModule
                 ' Nome da Imagem - 'sign'
                 ' Tamanho da imagem x000;y000
 
-                imagem.AppendFormat("{0}G1,sign;{1};{2}{3}", Chr(2), item, Chr(3), Environment.NewLine)
+                imagem.AppendFormat("{0}G1,sign;{1};{2}{3}",
+                                    STX,
+                                    item,
+                                    ETX,
+                                    Environment.NewLine)
             Else
-                imagem.AppendFormat("{0}u{1},{2};{3}{4}", Chr(2), contador - 1, item, Chr(3), Environment.NewLine)
+                imagem.AppendFormat("{0}u{1},{2};{3}{4}",
+                                    STX,
+                                    contador - 1,
+                                    item,
+                                    ETX,
+                                    Environment.NewLine)
             End If
             contador += 1
         Next
         ' Finaliza modo de programação (R)
-        imagem.AppendFormat("{0}R;{1}{2}", Chr(2), Chr(3), Environment.NewLine)
+        imagem.AppendFormat("{0}R;{1}{2}", STX, ETX, Environment.NewLine)
 
         Return imagem.ToString()
     End Function
