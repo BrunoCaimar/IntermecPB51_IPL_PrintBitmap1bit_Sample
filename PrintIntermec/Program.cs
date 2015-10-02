@@ -1,38 +1,29 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
+// Exemplo de impressão de imagens monocromaticas 
+// usando IPL - Impressora testada: Intermec PB51
 
 namespace PrintIntermec
 {
     class Program
     {
+        private const char STX = (char)2;
+        private const char ESC = (char)27;
+        private const char ETX = (char)3;
 
         static void Main(string[] args)
         {
-            //var imagem = Xxxx();
-            //GetImageFormat(Xxxx());
-            //return;
-
-            //var dados = System.IO.File.ReadAllText(@"C:\temp\ipl_imagem.txt");
-            //printFile(dados);
-            //var dados3 = System.IO.File.ReadAllText(@"C:\temp\ipl_imagem3.txt");
-            //printFile(dados3);
-            //var dados2 = System.IO.File.ReadAllText(@"C:\temp\ipl_imagem2.txt");
-            //printFile(dados2);
-            //Console.ReadKey();
-
             Console.WriteLine("Lendo imagem do disco...");
-            var ipl_imagem = GetIPLForImageBits(GetImageBits(@"C:\temp\IMAGEN.bmp"));
-            var ipl_to_print_imagem = File.ReadAllText(@"C:\temp\galo_print.txt");
-            var galo = File.ReadAllText(@"C:\temp\galo.txt");
+            var ipl_imagem = GetIPLForImageBits(GetImageBits(@"IMAGEN.bmp"));
+            var ipl_to_print_imagem = File.ReadAllText(@"print_image_g1.txt");
 
             // Salva apenas para referencia
-            File.WriteAllText(@"C:\temp\imagem.txt", ipl_imagem);
+            File.WriteAllText(@"imagem.txt", ipl_imagem);
 
             Console.WriteLine("Enviando imagem para impressora...");
             sendData2Printer(ipl_imagem);
@@ -46,15 +37,12 @@ namespace PrintIntermec
         {
             var bmp = new Bitmap(path2bitmap);
             var imagem_bits = new ArrayList();
-            // HACK - Normaliza o tamanho 
-            var xx = bmp.Height;
-            var yy = bmp.Width;
-            var xy = string.Format("x{0};y{1}", xx, yy);
+            var xy = string.Format("x{0};y{1}", bmp.Height, bmp.Width);
             imagem_bits.Add(xy);
 
             for (int y = 0; y < bmp.Height; y++)
             {
-                var linha_bit = "";
+                var linha_bit = string.Empty;
                 for (int x = 0; x < bmp.Width; x++)
                 {
 
@@ -72,16 +60,16 @@ namespace PrintIntermec
             var imagem = new StringBuilder();
             // Cabeçalho (c - Modo de emulação)
             imagem.AppendFormat("{0}{1}c{2}{3}",
-                (char)2,
-                (char)27,
-                (char)3,
+                STX,
+                ESC,
+                ETX,
                 Environment.NewLine);
 
             // P - Modo de programação
             imagem.AppendFormat("{0}{1}P{2}{3}",
-                (char)2,
-                (char)27,
-                (char)3,
+                STX,
+                ESC,
+                ETX,
                 Environment.NewLine);
 
             var contador = 0;
@@ -90,29 +78,29 @@ namespace PrintIntermec
                 if (contador == 0)
                 {
                     // Posição da Imagem na memória da impressora (G1)
-                    // Nome da Imagem - galo
+                    // Nome da Imagem - sign
                     // Tamanho da imagem x000;y000
-                    imagem.AppendFormat("{0}G1,galo;{1};{2}{3}",
-                        (char)2,
+                    imagem.AppendFormat("{0}G1,sign;{1};{2}{3}",
+                        STX,
                         item,
-                        (char)3,
+                        ETX,
                         Environment.NewLine);
                 }
                 else
                 {
                     imagem.AppendFormat("{0}u{1},{2};{3}{4}",
-                        (char)2,
+                        STX,
                         contador - 1,
                         item,
-                        (char)3,
+                        ETX,
                         Environment.NewLine);
                 }
                 contador++;
             }
             // Finaliza modo de programação (R)
             imagem.AppendFormat("{0}R;{1}{2}",
-                (char)2,
-                (char)3,
+                STX,
+                ETX,
                 Environment.NewLine);
 
             return imagem.ToString();
@@ -126,9 +114,6 @@ namespace PrintIntermec
         static void sendData2Printer(String dados)
         {
             var printPort = new System.IO.Ports.SerialPort();
-            printPort.DataReceived += PrintPort_DataReceived;
-            printPort.ErrorReceived += PrintPort_ErrorReceived;
-            printPort.PinChanged += PrintPort_PinChanged;
 
             if (!printPort.IsOpen)
             {
@@ -140,24 +125,6 @@ namespace PrintIntermec
             printPort.Write(dados);
 
             printPort.Close();
-        }
-
-        private static void PrintPort_PinChanged(object sender, System.IO.Ports.SerialPinChangedEventArgs e)
-        {
-            Console.Out.WriteLine("PrintPort_PinChanged");
-            Console.Out.WriteLine("PrintPort_PinChanged" + e.ToString());
-        }
-
-        private static void PrintPort_ErrorReceived(object sender, System.IO.Ports.SerialErrorReceivedEventArgs e)
-        {
-            Console.Out.WriteLine("PrintPort_ErrorReceived");
-            Console.Out.WriteLine("PrintPort_ErrorReceived" + e.ToString());
-        }
-
-        private static void PrintPort_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
-        {
-            Console.Out.WriteLine("PrintPort_DataReceived");
-            Console.Out.WriteLine("PrintPort_DataReceived" + e.ToString());
         }
     }
 }
