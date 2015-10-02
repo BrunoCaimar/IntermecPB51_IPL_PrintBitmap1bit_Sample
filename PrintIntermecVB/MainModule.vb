@@ -2,16 +2,16 @@
 Imports System.IO
 Imports System.Text
 
+' Exemplo de impressão de imagens monocromaticas 
+' usando IPL - Impressora testada: Intermec PB51
 Module MainModule
     Private Const STX As Char = Chr(2)
     Private Const ESC As Char = Chr(27)
     Private Const ETX As Char = Chr(3)
 
     Public Sub Main(args As String())
-        ' Exemplo de impressão de imagens monocromaticas 
-        ' usando IPL - Impressora testada: Intermec PB51
         Console.WriteLine("Lendo imagem do disco...")
-        Dim ipl_imagem = GetIPLForImageBits(GetImageBits("IMAGEN.bmp"))
+        Dim ipl_imagem = GetIPLForImageBits(GetImageBits("imagen.bmp"))
         Dim ipl_to_print_imagem = File.ReadAllText("print_image_g1.txt")
 
         ' Salva apenas para referencia
